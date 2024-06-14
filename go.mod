@@ -1,4 +1,4 @@
-module mcs.pg.client
+module github.com/abwhop/pg_client
 
 go 1.21
 
