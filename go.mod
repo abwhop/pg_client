@@ -1,4 +1,4 @@
-module github.com/abwhop/pg_client
+module git.nlmk.com/mcs/go_libs/pg_client
 
 go 1.21
 
