@@ -8,7 +8,6 @@ import (
 	"sync"
 )
 
-var connect *gorm.DB
 var once sync.Once
 
 type Config struct {
@@ -20,13 +19,21 @@ type Config struct {
 	SqlDebug bool   `env:"SQL_DEBUG" env-default:"false"`
 }
 
-func GetInstance(cfg Config) (*gorm.DB, error) {
+type PgClient struct {
+	db *gorm.DB
+}
+
+func GetInstance(cfg Config) (*PgClient, error) {
 	var err error
+	var connection *gorm.DB
 	once.Do(func() {
-		connect, err = gorm.Open(postgres.Open(fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", cfg.Host, cfg.User, cfg.Name, cfg.Password)), &gorm.Config{})
+		connection, err = gorm.Open(postgres.Open(fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", cfg.Host, cfg.User, cfg.Name, cfg.Password)), &gorm.Config{})
 		if cfg.SqlDebug {
-			connect = connect.Debug()
+			connection = connection.Debug()
 		}
 	})
-	return connect, err
+	if err != nil {
+		return nil, err
+	}
+	return &PgClient{db: connection}, err
 }
