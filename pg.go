@@ -1,4 +1,4 @@
-package database
+package pg_client
 
 import (
 	"fmt"
