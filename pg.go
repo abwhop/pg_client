@@ -15,12 +15,13 @@ import (
 var once sync.Once
 
 type Config struct {
-	Port     string `env:"DB_SERVER_DB_PORT" env-default:"5432"`
-	Host     string `env:"DB_SERVER_HOST" env-default:"localhost"`
-	Name     string `env:"DB_SERVER_DB_NAME" env-default:"postgres"`
-	User     string `env:"DB_SERVER_USER_NAME" env-default:"user"`
-	Password string `env:"DB_SERVER_USER_PASS" env-default:"password"`
-	SqlDebug bool   `env:"SQL_DEBUG" env-default:"false"`
+	Port          string `env:"DB_SERVER_DB_PORT" env-default:"5432"`
+	Host          string `env:"DB_SERVER_HOST" env-default:"localhost"`
+	Name          string `env:"DB_SERVER_DB_NAME" env-default:"postgres"`
+	User          string `env:"DB_SERVER_USER_NAME" env-default:"user"`
+	Password      string `env:"DB_SERVER_USER_PASS" env-default:"password"`
+	SqlDebug      bool   `env:"SQL_DEBUG" env-default:"false"`
+	SlowThreshold int    `env:"SLOW_THRESHOLD" env-default:"1"`
 }
 
 func GetInstance(cfg Config) (*gorm.DB, error) {
@@ -32,11 +33,11 @@ func GetInstance(cfg Config) (*gorm.DB, error) {
 			Logger: logger.New(
 				log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 				logger.Config{
-					SlowThreshold:             time.Second,   // Slow SQL threshold
-					LogLevel:                  logger.Silent, // Log level
-					IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
-					ParameterizedQueries:      true,          // Don't include params in the SQL log
-					Colorful:                  false,         // Disable color
+					SlowThreshold:             time.Second * time.Duration(cfg.SlowThreshold), // Slow SQL threshold
+					LogLevel:                  logger.Silent,                                  // Log level
+					IgnoreRecordNotFoundError: true,                                           // Ignore ErrRecordNotFound error for logger
+					ParameterizedQueries:      true,                                           // Don't include params in the SQL log
+					Colorful:                  false,                                          // Disable color
 				},
 			),
 		})
