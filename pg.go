@@ -5,7 +5,11 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"log"
+	"os"
 	"sync"
+	"time"
 )
 
 var once sync.Once
@@ -19,15 +23,23 @@ type Config struct {
 	SqlDebug bool   `env:"SQL_DEBUG" env-default:"false"`
 }
 
-type PgClient struct {
-	db *gorm.DB
-}
-
-func GetInstance(cfg Config) (*PgClient, error) {
+func GetInstance(cfg Config) (*gorm.DB, error) {
 	var err error
 	var connection *gorm.DB
 	once.Do(func() {
-		connection, err = gorm.Open(postgres.Open(fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", cfg.Host, cfg.User, cfg.Name, cfg.Password)), &gorm.Config{})
+
+		connection, err = gorm.Open(postgres.Open(fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", cfg.Host, cfg.User, cfg.Name, cfg.Password)), &gorm.Config{
+			Logger: logger.New(
+				log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+				logger.Config{
+					SlowThreshold:             time.Second,   // Slow SQL threshold
+					LogLevel:                  logger.Silent, // Log level
+					IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+					ParameterizedQueries:      true,          // Don't include params in the SQL log
+					Colorful:                  false,         // Disable color
+				},
+			),
+		})
 		if cfg.SqlDebug {
 			connection = connection.Debug()
 		}
@@ -35,5 +47,5 @@ func GetInstance(cfg Config) (*PgClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &PgClient{db: connection}, err
+	return connection, err
 }
